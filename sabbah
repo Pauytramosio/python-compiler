@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
-import assembler
+import compiler
 import tokenizer
 if len(sys.argv) < 2: raise RuntimeError(f"Expected at least 2 arguments, received {len(sys.argv)}")
 
@@ -22,18 +22,20 @@ if (not os.path.isfile(_in)): raise RuntimeError(f"File \"{sys.argv[1]}\" does n
 code: str
 with open(_in, 'r') as file: code = file.read()
 tokenized: list[tokenizer.Token] = tokenizer.tokenize(code)
-assembled: str                   = assembler.assemble(tokenized)
+compiled:  str                   = compiler.assemble(tokenized)
 if os.path.isfile(_out):
-    if not "--no-preserve-out" in sys.argv:
-        print(f"fatal: output file already exists: \"{_out}\"")
+    if not "--no-preserve" in sys.argv:
+        raise RuntimeError(f"fatal: output file already exists: \"{_out}\"")
 
-ASM = _out + ".asm"
-OBJ = _out + ".o"
-with open(ASM, 'w') as out_asm:
-    out_asm.write(assembled)
-os.system(f"nasm -felf64 {ASM}")
-os.system(f"ld {OBJ} -o {_out}")
+C = _out + ".c"
+with open(C, 'w') as out_c:
+    out_c.write(compiled)
+
+COMPILE_C_COMMAND = f"gcc {C} -o {_out}{" -S" * bool("--asm" in sys.argv)}"
+os.system(COMPILE_C_COMMAND)
 
 if not "--no-clean" in sys.argv:
-    os.system(f"rm {ASM}")
-    os.system(f"rm {OBJ}")
+    os.system(f"rm {C}")
+
+for g in globals():
+    del g
