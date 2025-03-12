@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "stab.h": "c",
+        "avx512vldqintrin.h": "c"
+    }
+}
